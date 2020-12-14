@@ -12,12 +12,16 @@ export default function ViewChannelsComponent (props) {
   useEffect(() => {
     let view = [];
 
-    channels.forEach(channel => {
-      view.push(<div className={'channel'}>{data[channel.channel_id]}</div>)
+    channels.forEach(channel_id => {
+      view.push(<div key={channel_id} className={'channel'}>{data[channel_id]}</div>)
     });
     
     setView(view);
   }, []);
+
+  if(!channels.length) {
+    return <div className={'not-available'}>N/A</div>
+  }
 
   return (
     <div>

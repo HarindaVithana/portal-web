@@ -20,8 +20,8 @@ export default class EditChannelsComponent extends React.Component {
     return <TagBox
       dataSource={this.props.data.column.lookup.dataSource}
       defaultValue={this.props.data.value}
-      valueExpr="channel_id"
-      displayExpr="option"
+      valueExpr="id"
+      displayExpr="name"
       showSelectionControls={true}
       showMultiTagOnly={false}
       applyValueMode="useButtons"

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import DataGrid, { Column, Pager, Paging, FilterRow, Editing, Lookup } from 'devextreme-react/data-grid';
+import notify from 'devextreme/ui/notify';
 
-import { getStudents } from '../../api/students';
+import './students.scss';
+import { getStudents, setStudent } from '../../api/students';
 import { ViewBooleanComponent, EditBooleanComponent, ViewOptionComponent, EditOptionComponent, ViewChannelsComponent, EditChannelsComponent } from '../../components';
-import { TV_CHANNELS, RADIO_CHANNELS } from '../../options';
+import { TV_CHANNELS, RADIO_CHANNELS, DEVICES, CONNECTION_TYPES, GRADES } from '../../options';
 
 export default function Students(props) {
   const { match, location } = props;
@@ -13,9 +15,22 @@ export default function Students(props) {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
-    setStudents(require('./data.json').data)
-    //getStudents(institution_id).then((data) => setStudents(data));
+    getStudents(institution_id).then((data) => setStudents(data));
   }, []);
+
+  const handleOnSaved = async (data) => {
+    setStudent(data).then((response) => {
+      if(response.status === 200) {
+        notify("Updated successfully", 'success', 2000);
+      }
+      else if(response.status === 401) {
+        notify("Unauthorized attempt", 'error', 2000);
+      }
+      else {
+        notify("Update failed", 'error', 2000);
+      }
+    })
+  }
 
   return (
     <React.Fragment>
@@ -30,6 +45,7 @@ export default function Students(props) {
         defaultFocusedRowIndex={0}
         columnAutoWidth={true}
         columnHidingEnabled={true}
+        onSaved={(data) => handleOnSaved(data.changes[0].data)}
       >
         <Paging defaultPageSize={10} />
         <Pager showPageSizeSelector={true} showInfo={true} />
@@ -42,7 +58,7 @@ export default function Students(props) {
         />
 
         <Column
-          dataField={'additional_data.student_id'}
+          dataField={'student_id'}
           caption={'ID'}
           allowEditing={false}
         />
@@ -64,6 +80,7 @@ export default function Students(props) {
         <Column
           dataField={'education_grade_id'}
           caption={'Grade'}
+          calculateCellValue={(rowData) => { return GRADES[rowData.education_grade_id] }}
           allowEditing={false}
           hidingPriority={2}
         />
@@ -78,13 +95,13 @@ export default function Students(props) {
           caption={'Type of Device'}
           dataField={'additional_data.type_of_device'}
           calculateCellValue={(rowData) => { return rowData.additional_data && rowData.additional_data.type_of_device }}
-          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && TV_CHANNELS[row.data.additional_data.type_of_device]} /> }}
+          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && DEVICES[row.data.additional_data.type_of_device]} /> }}
           editCellComponent={EditOptionComponent}
         >
           <Lookup
-            dataSource={Object.entries(TV_CHANNELS).map(data => { return { id: data[0], option: data[1] }})}
+            dataSource={Object.entries(DEVICES).map(data => { return { id: data[0], name: data[1] }})}
             valueExpr="id"
-            displayExpr="option"
+            displayExpr="name"
           />
         </Column>
 
@@ -92,17 +109,18 @@ export default function Students(props) {
           caption={'Type of Device at Home'}
           dataField={'additional_data.type_of_device_at_home'}
           calculateCellValue={(rowData) => { return rowData.additional_data && rowData.additional_data.type_of_device_at_home }}
-          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && TV_CHANNELS[row.data.additional_data.type_of_device_at_home]} /> }}
+          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && DEVICES[row.data.additional_data.type_of_device_at_home]} /> }}
           editCellComponent={EditOptionComponent}
         >
           <Lookup
-            dataSource={Object.entries(TV_CHANNELS).map(data => { return { id: data[0], option: data[1] }})}
+            dataSource={Object.entries(DEVICES).map(data => { return { id: data[0], name: data[1] }})}
             valueExpr="id"
-            displayExpr="option"
+            displayExpr="name"
           />
         </Column>
 
         <Column
+          width={150}
           caption={'Internet at Home'}
           dataField={'additional_data.internet_at_home'}
           calculateCellValue={(rowData) => { return rowData.additional_data ? rowData.additional_data.internet_at_home ? 'Yes' : 'No' : null}}
@@ -116,17 +134,43 @@ export default function Students(props) {
           caption={'Internet Device'}
           dataField={'additional_data.internet_device'}
           calculateCellValue={(rowData) => { return rowData.additional_data && rowData.additional_data.internet_device }}
-          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && TV_CHANNELS[row.data.additional_data.internet_device]} /> }}
+          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && DEVICES[row.data.additional_data.internet_device]} /> }}
           editCellComponent={EditOptionComponent}
         >
           <Lookup
-            dataSource={Object.entries(TV_CHANNELS).map(data => { return { id: data[0], option: data[1] }})}
+            dataSource={Object.entries(DEVICES).map(data => { return { id: data[0], name: data[1] }})}
             valueExpr="id"
-            displayExpr="option"
+            displayExpr="name"
           />
         </Column>
 
         <Column
+          caption={'Connection Type'}
+          dataField={'additional_data.connection_type'}
+          calculateCellValue={(rowData) => { return rowData.additional_data && rowData.additional_data.connection_type }}
+          cellRender={(row) => { return <ViewOptionComponent value={row.data.additional_data && CONNECTION_TYPES[row.data.additional_data.connection_type]} /> }}
+          editCellComponent={EditOptionComponent}
+        >
+          <Lookup
+            dataSource={Object.entries(CONNECTION_TYPES).map(data => { return { id: data[0], name: data[1] }})}
+            valueExpr="id"
+            displayExpr="name"
+          />
+        </Column>
+
+        <Column
+          width={150}
+          caption={'Electricity at Home'}
+          dataField={'additional_data.electricity_at_home'}
+          calculateCellValue={(rowData) => { return rowData.additional_data ? rowData.additional_data.electricity_at_home ? 'Yes' : 'No' : null}}
+          cellRender={(row) => { return <ViewBooleanComponent value={row.data.additional_data && row.data.additional_data.electricity_at_home}/> }}
+          editCellComponent={EditBooleanComponent}
+        >
+          <Lookup dataSource={['Yes', 'No']} />
+        </Column>
+
+        <Column
+          width={150}
           caption={'TV at Home'}
           dataField={'additional_data.tv_at_home'}
           calculateCellValue={(rowData) => { return rowData.additional_data ? rowData.additional_data.tv_at_home ? 'Yes' : 'No' : null}}
@@ -137,6 +181,7 @@ export default function Students(props) {
         </Column>
 
         <Column
+          width={150}
           caption={'Satellite TV at Home'}
           dataField={'additional_data.satellite_tv_at_home'}
           calculateCellValue={(rowData) => { return rowData.additional_data ? rowData.additional_data.satellite_tv_at_home ? 'Yes' : 'No' : null}}
@@ -150,16 +195,15 @@ export default function Students(props) {
           width={200}
           caption={'TV Channels'}
           dataField={'tv_channels'}
-          calculateCellValue={(rowData) => { return rowData.tv_channels.map((channel) => channel.channel_id) }}
           filterOperations={['contains']}
           cellRender={(row) => { return <ViewChannelsComponent data={TV_CHANNELS} channels={row.data.tv_channels}/> }}
           editCellComponent={EditChannelsComponent}
           hidingPriority={3}
         >
           <Lookup
-            dataSource={Object.entries(TV_CHANNELS).map(data => { return { channel_id: data[0], option: data[1] }})}
-            valueExpr="channel_id"
-            displayExpr="option"
+            dataSource={Object.entries(TV_CHANNELS).map(data => { return { id: data[0], name: data[1] }})}
+            valueExpr="id"
+            displayExpr="name"
           />
         </Column>
 
@@ -167,16 +211,15 @@ export default function Students(props) {
           width={200}
           caption={'Radio Channels'}
           dataField={'radio_channels'}
-          calculateCellValue={(rowData) => { return rowData.radio_channels.map((channel) => channel.channel_id) }}
           filterOperations={['contains']}
           cellRender={(row) => { return <ViewChannelsComponent data={RADIO_CHANNELS} channels={row.data.radio_channels}/> }}
           editCellComponent={EditChannelsComponent}
           hidingPriority={4}
         >
           <Lookup
-            dataSource={Object.entries(RADIO_CHANNELS).map(data => { return { channel_id: data[0], option: data[1] }})}
-            valueExpr="channel_id"
-            displayExpr="option"
+            dataSource={Object.entries(RADIO_CHANNELS).map(data => { return { id: data[0], name: data[1] }})}
+            valueExpr="id"
+            displayExpr="name"
           />
         </Column>
 
